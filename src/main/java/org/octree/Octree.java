@@ -18,6 +18,10 @@ public class Octree {
         data = new ArrayList<>();
     }
 
+    public void radiusNeighbors(Octant octant, PointT query, float radius, float sqrRadius, List<Integer> resultIndices) {
+
+    }
+
     public void initialize() {
         initialize(new OctreeParams());
     }
@@ -239,19 +243,15 @@ public class Octree {
         return false;
     }
 
-    protected void radiusNeighbors(Octant octant, PointT query, float radius, float sqrRadius, List<Integer> resultIndices) {
-
-    }
-
-    protected static boolean overlaps(PointT query, float radius, float sqrRadius, Octant o) {
+    private static boolean overlaps(PointT query, float radius, float sqrRadius, Octant o) {
         return false;
     }
 
-    protected static boolean contains(PointT query, float radius, float sqrRadius, Octant o) {
+    private static boolean contains(PointT query, float radius, float sqrRadius, Octant o) {
         return false;
     }
 
-    protected static boolean inside(PointT query, float radius, float sqrRadius, Octant o) {
+    private static boolean inside(PointT query, float radius, float sqrRadius, Octant o) {
         return false;
     }
 }
