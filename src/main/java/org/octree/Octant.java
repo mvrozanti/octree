@@ -1,15 +1,14 @@
 package org.octree;
 
 import java.util.*;
-import java.util.function.*;
+import lombok.*;
 
+@Data
 public class Octant<T> {
-    boolean isLeaf;
-    T x, y, z;
-    float extent;
-    int start, end;
-    int size;
-    Octant<T>[] child = new Octant[8];
-
-
+    private boolean isLeaf = true;
+    private T x, y, z;
+    private float extent;
+    private int start, end;
+    private int size;
+    private List<Octant<T>> child = new ArrayList<>(8);
 }
