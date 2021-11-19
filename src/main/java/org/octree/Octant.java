@@ -4,11 +4,20 @@ import java.util.*;
 import lombok.*;
 
 @Data
-public class Octant<T> {
+public class Octant {
     private boolean isLeaf = true;
-    private T x, y, z;
-    private float extent;
+    private Double x, y, z;
+    private Double extent;
     private int start, end;
     private int size;
-    private List<Octant<T>> child = new ArrayList<>(8);
+    @Getter(AccessLevel.NONE)
+    private List<Octant> child = new ArrayList<>(8);
+
+    public void setChild(int index, Octant child) {
+        this.child.set(index, child);
+    }
+
+    public Octant getChild(int index) {
+        return child.get(index);
+    }
 }
