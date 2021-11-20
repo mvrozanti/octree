@@ -254,7 +254,6 @@ public class OctreeTest {
         }
     }
 
-    @Test
     void testFindNeighbor() {
         int N = 1000;
         Random random = new Random(1234);
