@@ -9,14 +9,9 @@ public class Octree {
     }
 
     private OctreeParams params;
-    private Octant root;
+    protected Octant root;
     private List<PointT> data;
-    private List<Integer> successors;
-
-    public Octree() {
-        root = new Octant();
-        data = new ArrayList<>();
-    }
+    protected List<Integer> successors;
 
     public void radiusNeighbors(Octant octant, PointT query, float radius, float sqrRadius, List<Integer> resultIndices) {
 
@@ -34,16 +29,16 @@ public class Octree {
         clear();
         params = octreeParams;
 
-        if (params.getCopyPoints())         /** is this an accurate translation for that condition? **/
+        if (params.isCopyPoints())         /** is this an accurate translation for that condition? **/
             data = new ArrayList<>(points); /*                                                      **/
         else                                /*                                                      **/
             data = points;                  /*                                                      **/
 
         final int N = points.size();
-        successors = new ArrayList<>(N);
+        successors = Arrays.asList(new Integer[N]);
 
-        List<Double> min = new ArrayList<>(3);
-        List<Double> max = new ArrayList<>(3);
+        List<Double> min = Arrays.asList(new Double[3]);
+        List<Double> max = Arrays.asList(new Double[3]);
         min.set(0, points.get(0).x());
         min.set(1, points.get(1).y());
         min.set(2, points.get(2).z());
@@ -68,7 +63,7 @@ public class Octree {
                 max.set(2, p.z());
         }
 
-        List<Double> ctr = new ArrayList<>(3);
+        List<Double> ctr = new ArrayList<>();
         ctr.add(min.get(0));
         ctr.add(min.get(1));
         ctr.add(min.get(2));
@@ -89,7 +84,7 @@ public class Octree {
         clear();
         params = octreeParams;
 
-        if (params.getCopyPoints())         /** is this an accurate translation for that condition? **/
+        if (params.isCopyPoints())         /** is this an accurate translation for that condition? **/
             data = new ArrayList<>(points); /*                                                      **/
         else                                /*                                                      **/
             data = points;                  /*                                                      **/

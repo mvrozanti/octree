@@ -11,7 +11,7 @@ public class Octant {
     private int start, end;
     private int size;
     @Getter(AccessLevel.NONE)
-    private List<Octant> child = new ArrayList<>(8);
+    private List<Octant> child = Arrays.asList(new Octant[8]);
 
     public void setChild(int index, Octant child) {
         this.child.set(index, child);

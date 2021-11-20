@@ -8,7 +8,7 @@ import lombok.*;
 public class OctreeParams {
     @Builder.Default
     private int bucketSize = 32;
-    private Boolean copyPoints;
+    private boolean copyPoints;
     private float minExtent;
 
     public OctreeParams() {

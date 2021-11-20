@@ -36,6 +36,9 @@ public class NaiveNeighborSearch {
     public void radiusNeighbors(PointT query, double radius, List<Integer> resultIndices, Distance distance) {
         List<PointT> pts = data;
         resultIndices.clear();
-        double sqrRadius =
+        double sqrRadius = distance.sqr(radius);
+        for (int i = 0; i < pts.size(); ++i)
+            if (distance.compute(query, pts.get(i)) < sqrRadius)
+                resultIndices.add(i);
     }
 }
