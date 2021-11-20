@@ -1,4 +1,4 @@
-package org.octree;
+package io.github.mvrozanti.octree;
 
 import lombok.*;
 
@@ -9,7 +9,7 @@ public class OctreeParams {
     @Builder.Default
     private int bucketSize = 32;
     private boolean copyPoints;
-    private float minExtent;
+    private double minExtent;
 
     public OctreeParams() {
         bucketSize = 32;

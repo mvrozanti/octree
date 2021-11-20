@@ -1,4 +1,4 @@
-package org.octree;
+package io.github.mvrozanti.octree;
 
 public interface PointT {
     Double x();

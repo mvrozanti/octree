@@ -1,7 +1,7 @@
-package org.octree;
+package io.github.mvrozanti.octree;
 
+import io.github.mvrozanti.octree.distance.*;
 import java.util.*;
-import org.octree.distance.*;
 
 public class NaiveNeighborSearch {
 
@@ -22,7 +22,7 @@ public class NaiveNeighborSearch {
         double maxDistance = Double.POSITIVE_INFINITY;
         double sqrMinDistance = (minDistance < 0) ? minDistance : distance.sqr(minDistance);
         int resultIndex = -1;
-        for (int i = 0; i < pts.size(); ++i) {
+        for (int i = 0; i < pts.size(); i++) {
             double dist = distance.compute(query, pts.get(i));
             if ((dist > sqrMinDistance) && (dist < maxDistance)) {
                 maxDistance = dist;
@@ -37,7 +37,7 @@ public class NaiveNeighborSearch {
         List<PointT> pts = data;
         resultIndices.clear();
         double sqrRadius = distance.sqr(radius);
-        for (int i = 0; i < pts.size(); ++i)
+        for (int i = 0; i < pts.size(); i++)
             if (distance.compute(query, pts.get(i)) < sqrRadius)
                 resultIndices.add(i);
     }

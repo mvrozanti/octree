@@ -1,6 +1,6 @@
-package org.octree.distance;
+package io.github.mvrozanti.octree.distance;
 
-import org.octree.*;
+import io.github.mvrozanti.octree.*;
 import static java.lang.Math.*;
 
 public class EuclideanDistance extends Distance {

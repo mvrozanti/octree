@@ -3,7 +3,7 @@ plugins {
     id 'maven-publish'
 }
 
-group 'org.octree'
+group 'io.github.mvrozanti.octree'
 version '1.0-SNAPSHOT'
 
 repositories {
@@ -23,4 +23,19 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        octree(MavenPublication) {
+            from components.java
+        }
+    }
+
+    repositories {
+        maven {
+            name = 'octree'
+            url = layout.buildDirectory.dir("octree")
+        }
+    }
 }

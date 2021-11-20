@@ -1,4 +1,4 @@
-package org.octree;
+package io.github.mvrozanti.octree;
 
 import java.util.*;
 import lombok.*;
@@ -59,20 +59,21 @@ public class OctreeTest {
 
         List<Integer> elementCount = new ArrayList<>(Collections.nCopies(N, 0));
         int idx = root.getStart();
-        for (int i = 0; i < N; ++i) {
+        for (int i = 0; i < N; i++) {
             assertTrue(idx < N);
             assertTrue(oct.successors.get(idx) <= N);
-            elementCount.set(idx, elementCount.get(idx) + 1);
+            int count = elementCount.get(idx);
+            elementCount.set(idx, count + 1);
             assertEquals(1, elementCount.get(idx));
             idx = oct.successors.get(idx);
         }
 
-        for (int i = 0; i < N; ++i)
+        for (int i = 0; i < N; i++)
             assertEquals(1, elementCount.get(i));
 
         ArrayDeque<Octant> queue = new ArrayDeque<>();
         queue.push(root);
-        List<Integer> assignment = new ArrayList<>(Collections.singletonList(-1));
+        List<Integer> assignment = new ArrayList<>(Collections.nCopies(N, -1));
 
         while (!queue.isEmpty()) {
             Octant octant = queue.pop();
@@ -82,18 +83,18 @@ public class OctreeTest {
             int octantIdx = octant.getStart();
             int lastIdx = octant.getStart();
 
-            for (int i = 0; i < octant.getSize(); ++i) {
+            for (int i = 0; i < octant.getSize(); i++) {
                 double x = points.get(octantIdx).x() - octant.getX();
                 double y = points.get(octantIdx).y() - octant.getY();
                 double z = points.get(octantIdx).z() - octant.getZ();
 
-                assertTrue(abs(x) < octant.getExtent());
-                assertTrue(abs(y) < octant.getExtent());
-                assertTrue(abs(z) < octant.getExtent());
+                assertTrue(abs(x) <= octant.getExtent());
+                assertTrue(abs(y) <= octant.getExtent());
+                assertTrue(abs(z) <= octant.getExtent());
 
                 assignment.set(octantIdx, -1);
                 lastIdx = octantIdx;
-                idx = oct.successors.get(idx);
+                octantIdx = oct.successors.get(octantIdx);
             }
             assertEquals(octant.getEnd(), lastIdx);
 
@@ -107,16 +108,18 @@ public class OctreeTest {
                 if (child == null)
                     continue;
                 shouldBeLeaf = false;
+                if (firstchild == null)
+                    firstchild = child;
                 if (lastchild != null)
                     assertEquals(child.getStart(), oct.successors.get(lastchild.getEnd()));
 
                 pointSum += child.getSize();
                 lastchild = child;
                 int childIdx = child.getStart();
-                for (int i = 0; i < child.getSize(); ++i) {
+                for (int i = 0; i < child.getSize(); i++) {
                     assertEquals(-1, assignment.get(childIdx));
                     assignment.set(childIdx, c);
-                    idx = oct.successors.get(idx);
+                    childIdx = oct.successors.get(childIdx);
                 }
                 queue.push(child);
             }
@@ -132,9 +135,9 @@ public class OctreeTest {
             if (!octant.isLeaf()) {
                 assertEquals(octant.getSize(), pointSum);
                 int leafIdx = octant.getStart();
-                for (int i = 0; i < octant.getSize(); ++i) {
+                for (int i = 0; i < octant.getSize(); i++) {
                     assertTrue(assignment.get(leafIdx) > -1);
-                    idx = oct.successors.get(leafIdx);
+                    leafIdx = oct.successors.get(leafIdx);
                 }
             }
         }
@@ -143,10 +146,10 @@ public class OctreeTest {
     private static void randomPoints(List<PointT> points, int N, int seed) {
         Random random = new Random(seed);
         points.clear();
-        for (int i = 0; i < N; ++i) {
-            double x = 10 * random.nextDouble() - 5;
-            double y = 10 * random.nextDouble() - 5;
-            double z = 10 * random.nextDouble() - 5;
+        for (int i = 0; i < N; i++) {
+            double x = 10 * random.nextGaussian() - 5;
+            double y = 10 * random.nextGaussian() - 5;
+            double z = 10 * random.nextGaussian() - 5;
 
             points.add(new Point(x, y, z));
         }

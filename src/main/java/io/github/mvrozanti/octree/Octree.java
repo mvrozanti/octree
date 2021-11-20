@@ -1,4 +1,4 @@
-package org.octree;
+package io.github.mvrozanti.octree;
 
 import java.util.*;
 
@@ -13,7 +13,7 @@ public class Octree {
     private List<PointT> data;
     protected List<Integer> successors;
 
-    public void radiusNeighbors(Octant octant, PointT query, float radius, float sqrRadius, List<Integer> resultIndices) {
+    public void radiusNeighbors(Octant octant, PointT query, double radius, double sqrRadius, List<Integer> resultIndices) {
 
     }
 
@@ -40,14 +40,15 @@ public class Octree {
         List<Double> min = Arrays.asList(new Double[3]);
         List<Double> max = Arrays.asList(new Double[3]);
         min.set(0, points.get(0).x());
-        min.set(1, points.get(1).y());
-        min.set(2, points.get(2).z());
+        min.set(1, points.get(0).y());
+        min.set(2, points.get(0).z());
         max.set(0, min.get(0));
         max.set(1, min.get(1));
         max.set(2, min.get(2));
 
-        for (int i = 0; i < N; ++i) {
+        for (int i = 0; i < N; i++) {
             successors.set(i, i + 1);
+//            System.out.println("successors[i] = " + i + " + 1 = " + (i + 1));
             PointT p = points.get(i);
             if (p.x() < min.get(0))
                 min.set(0, p.x());
@@ -70,7 +71,7 @@ public class Octree {
 
         double maxextent = 0.5 * (max.get(0) - min.get(0));
         ctr.set(0, ctr.get(0) + maxextent);
-        for (int i = 1; i < 3; ++i) {
+        for (int i = 1; i < 3; i++) {
             double extent = 0.5 * (max.get(i) - min.get(i));
             ctr.set(i, ctr.get(i) + extent);
             if (extent > maxextent)
@@ -96,8 +97,8 @@ public class Octree {
             return;
 
         int lastIdx = indexes.get(0);
-        List<Double> min = new ArrayList<>(3);
-        List<Double> max = new ArrayList<>(3);
+        List<Double> min = Arrays.asList(new Double[3]);
+        List<Double> max = Arrays.asList(new Double[3]);
         min.set(0, points.get(lastIdx).x());
         min.set(1, points.get(lastIdx).y());
         min.set(2, points.get(lastIdx).z());
@@ -105,7 +106,7 @@ public class Octree {
         max.set(1, min.get(1));
         max.set(2, min.get(2));
 
-        for (int i = 1; i < indexes.size(); ++i) {
+        for (int i = 1; i < indexes.size(); i++) {
             int idx = indexes.get(i);
             successors.set(lastIdx, idx);
             PointT p = points.get(idx);
@@ -132,7 +133,7 @@ public class Octree {
 
         Double maxextent = 0.5f * (max.get(0) - min.get(0));
         ctr.set(0, ctr.get(0) + maxextent);
-        for (int i = 1; i < 3; ++i) {
+        for (int i = 1; i < 3; i++) {
             Double extent = 0.5f * (max.get(i) - min.get(i));
             ctr.set(i, ctr.get(i) + extent);
             if (extent > maxextent)
@@ -143,7 +144,10 @@ public class Octree {
     }
 
     public void clear() {
-
+        root = null;
+        data = null;
+        if (successors != null)
+            successors.clear();
     }
 
     protected Octant createOctant(Double x, Double y, Double z, Double extent, int startIdx, int endIdx, int size) {
@@ -160,11 +164,11 @@ public class Octree {
         octant.setEnd(endIdx);
         octant.setSize(size);
 
-        double factor[] = {-0.5, 0.5};
+        double[] factor = {-0.5f, 0.5f};
 
         if (size > params.getBucketSize() && extent > 2 * params.getMinExtent()) {
             octant.setLeaf(false);
-            List<PointT> points = new ArrayList(data);
+            List<PointT> points = new ArrayList<>(data);
 
             List<Integer> childStarts = new ArrayList<>(Collections.nCopies(8, 0));
             List<Integer> childEnds = new ArrayList<>(Collections.nCopies(8, 0));
@@ -172,7 +176,7 @@ public class Octree {
 
             int idx = startIdx;
 
-            for (int i = 0; i < size; ++i) {
+            for (int i = 0; i < size; i++) {
                 PointT p = points.get(idx);
                 int mortonCode = 0;
                 if (p.x() > x)
@@ -195,7 +199,7 @@ public class Octree {
             double childExtent = 0.5 * extent;
             boolean firstTime = true;
             int lastChildIdx = 0;
-            for (int i = 0; i < 8; ++i) {
+            for (int i = 0; i < 8; i++) {
                 if (childSizes.get(i) == 0)
                     continue;
                 double childX = x + factor[(i & 1) > 0 ? 1 : 0] * extent;
@@ -216,7 +220,7 @@ public class Octree {
                 if (firstTime)
                     octant.setStart(octant.getChild(i).getStart());
                 else
-                    successors.set(octant.getChild(lastChildIdx).getEnd(), octant.getChild(i).getEnd());
+                    successors.set(octant.getChild(lastChildIdx).getEnd(), octant.getChild(i).getStart());
                 lastChildIdx = i;
                 octant.setEnd(octant.getChild(i).getEnd());
                 firstTime = false;
@@ -226,19 +230,19 @@ public class Octree {
         return octant;
     }
 
-    protected final boolean findNeighbor(Octant octant, PointT query, float minDistance, float maxDistance, int resultIndex) {
+    protected final boolean findNeighbor(Octant octant, PointT query, double minDistance, double maxDistance, int resultIndex) {
         return false;
     }
 
-    private static boolean overlaps(PointT query, float radius, float sqrRadius, Octant o) {
+    private static boolean overlaps(PointT query, double radius, double sqrRadius, Octant o) {
         return false;
     }
 
-    private static boolean contains(PointT query, float radius, float sqrRadius, Octant o) {
+    private static boolean contains(PointT query, double radius, double sqrRadius, Octant o) {
         return false;
     }
 
-    private static boolean inside(PointT query, float radius, float sqrRadius, Octant o) {
+    private static boolean inside(PointT query, double radius, double sqrRadius, Octant o) {
         return false;
     }
 }

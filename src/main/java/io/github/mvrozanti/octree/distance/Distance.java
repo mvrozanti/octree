@@ -1,6 +1,6 @@
-package org.octree.distance;
+package io.github.mvrozanti.octree.distance;
 
-import org.octree.*;
+import io.github.mvrozanti.octree.*;
 
 public abstract class Distance {
 
