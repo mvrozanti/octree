@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'maven-publish'
+    id 'signing'
 }
 
 group 'io.github.mvrozanti.octree'
@@ -19,23 +20,38 @@ dependencies {
 
     testCompileOnly 'org.projectlombok:lombok:1.18.22'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+
+    implementation group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
 }
 
 test {
     useJUnitPlatform()
 }
 
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+    archiveClassifier = "sources"
+}
+
 publishing {
     publications {
-        octree(MavenPublication) {
+        myPublication(MavenPublication) {
             from components.java
+            artifact sourceJar
+            pom {
+                name = "octree"
+                description = "Octree implementation with radius search support"
+                url = "http://github.com/mvrozanti/octree"
+            }
         }
     }
-
     repositories {
         maven {
-            name = 'octree'
-            url = layout.buildDirectory.dir("octree")
+            url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+            credentials {
+                username System.getenv("SONATYPE_USERNAME")
+                password System.getenv("SONATYPE_PASSWORD")
+            }
         }
     }
 }

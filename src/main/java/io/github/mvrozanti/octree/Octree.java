@@ -1,5 +1,6 @@
 package io.github.mvrozanti.octree;
 
+import io.github.mvrozanti.octree.distance.*;
 import java.util.*;
 
 public class Octree {
@@ -230,8 +231,20 @@ public class Octree {
         return octant;
     }
 
-    protected final boolean findNeighbor(Octant octant, PointT query, double minDistance, double maxDistance, int resultIndex) {
-        return false;
+    public final int findNeighbor(Octant octant, PointT query, double minDistance, double maxDistance, int resultIndex, Distance distance) {
+        return 0;
+    }
+
+    public int findNeighbor(PointT query, Distance distance) {
+        return findNeighbor(query, -1, distance);
+    }
+
+    public int findNeighbor(PointT query, double minDistance, Distance distance) {
+        double maxDistance = Double.POSITIVE_INFINITY;
+        int resultIndex = -1;
+        if(root == null)
+            return resultIndex;
+        return findNeighbor(root, query, minDistance, maxDistance, resultIndex, distance);
     }
 
     private static boolean overlaps(PointT query, double radius, double sqrRadius, Octant o) {

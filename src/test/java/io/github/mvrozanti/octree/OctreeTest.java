@@ -1,7 +1,10 @@
 package io.github.mvrozanti.octree;
 
+import io.github.mvrozanti.octree.distance.*;
 import java.util.*;
 import lombok.*;
+import org.apache.commons.math3.distribution.*;
+import org.apache.commons.math3.random.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.*;
 import static java.lang.Math.*;
@@ -251,6 +254,45 @@ public class OctreeTest {
         }
     }
 
+    @Test
+    void testFindNeighbor() {
+        int N = 1000;
+        Random random = new Random(1234);
+        var uniDist = new UniformRandomGenerator(RandomGeneratorFactory.createRandomGenerator(random)); // may be a long shot
+
+        List<PointT> points = new ArrayList<>();
+        randomPoints(points, N, 1234);
+
+        NaiveNeighborSearch bruteforce = new NaiveNeighborSearch();
+        bruteforce.initialize(points);
+        Octree octree = new Octree();
+        octree.initialize(points);
+
+        for (int i = 0; i < 10; i++) {
+            int index = (int) uniDist.nextNormalizedDouble();
+            PointT query = points.get(index);
+
+            assertEquals(index, bruteforce.findNeighbor(query, Distance.EUCLIDEAN));
+            assertEquals(index, octree.findNeighbor(query, Distance.EUCLIDEAN));
+
+
+            /***
+             * This part on the original implementation is weird.
+             * Both the variables defined above weren't used in the assertion below,
+             * but the same calls with 0.3f parameter instead of 0.0f were actually asserted.
+             */
+            int bfneighbor = bruteforce.findNeighbor(query, 0, Distance.EUCLIDEAN);
+            int octneighbor = octree.findNeighbor(query, 0, Distance.EUCLIDEAN);
+
+            assertEquals(bfneighbor, octneighbor);
+        }
+    }
+
+    @Test
+    private void testRadiusNeighbors() {
+
+    }
+
     private static void randomPoints(List<PointT> points, int N, int seed) {
         Random random = new Random(seed);
         points.clear();
@@ -261,5 +303,26 @@ public class OctreeTest {
 
             points.add(new Point(x, y, z));
         }
+    }
+
+    private static <T> boolean similarVectors(List<T> list1, List<T> list2) {
+        if (list1.size() != list2.size()) {
+            System.out.println("expected size = " + list1.size() + ", but got size = " + list2.size());
+            return false;
+        }
+        for (int i = 0; i < list1.size(); i++) {
+            boolean found = false;
+            for (int j = 0; j < list2.size(); j++) {
+                if (list1.get(i) == list2.get(j)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                System.out.println(i + "-th element (" + list1.get(i) + ") not found.");
+                return false;
+            }
+        }
+        return true;
     }
 }
