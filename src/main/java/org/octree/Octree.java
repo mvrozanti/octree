@@ -22,14 +22,6 @@ public class Octree {
 
     }
 
-    public void initialize() {
-        initialize(new OctreeParams());
-    }
-
-    public void initialize(OctreeParams octreeParams) {
-
-    }
-
     public void initialize(List<PointT> points) {
         initialize(points, new OctreeParams());
     }
