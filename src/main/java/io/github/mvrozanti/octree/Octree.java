@@ -131,7 +131,6 @@ public class Octree {
 
         for (int i = 0; i < N; i++) {
             successors.set(i, i + 1);
-//            System.out.println("successors[i] = " + i + " + 1 = " + (i + 1));
             PointT p = points.get(i);
             if (p.x() < min.get(0))
                 min.set(0, p.x());
