@@ -13,8 +13,8 @@ public class EuclideanDistanceType extends DistanceType {
     @Override
     public Double compute(PointT p, PointT q) {
         double diff1 = p.x() - q.x();
-        double diff2 = p.y() - p.y();
-        double diff3 = p.z() - p.z();
+        double diff2 = p.y() - q.y();
+        double diff3 = p.z() - q.z();
 
         return pow(diff1, 2) + pow(diff2, 2) + pow(diff3, 2);
     }

@@ -257,7 +257,7 @@ public class OctreeTest {
     void testFindNeighbor() {
         int N = 1000;
         Random random = new Random(1234);
-        var uniDist = new UniformRandomGenerator(RandomGeneratorFactory.createRandomGenerator(random)); // may be a long shot
+        val uniformDistribution = new UniformRandomGenerator(RandomGeneratorFactory.createRandomGenerator(random));
 
         List<PointT> points = new ArrayList<>();
         randomPoints(points, N, 1234);
@@ -268,7 +268,7 @@ public class OctreeTest {
         octree.initialize(points);
 
         for (int i = 0; i < 10; i++) {
-            int index = (int) uniDist.nextNormalizedDouble();
+            int index = (int) (uniformDistribution.nextNormalizedDouble()*1000);
             PointT query = points.get(index);
 
             assertEquals(index, bruteforce.findNeighbor(query, DistanceType.EUCLIDEAN));

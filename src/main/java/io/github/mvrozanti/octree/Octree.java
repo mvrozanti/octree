@@ -6,10 +6,6 @@ import java.util.concurrent.atomic.*;
 
 public class Octree {
 
-    public static void main(String[] args) {
-        Octree octree = new Octree();
-    }
-
     private OctreeParams params;
     protected Octant root;
     private List<PointT> data;
@@ -43,7 +39,7 @@ public class Octree {
 
         // check whether child nodes are in range.
         for (int c = 0; c < 8; ++c) {
-            if (octant.getChild(c).getSize() == 0) continue; // what means child == 0?
+            if (octant.getChild(c) == null) continue;
             if (!overlaps(query, radius, sqrRadius, octant.getChild(c), distanceType)) continue;
             radiusNeighbors(octant.getChild(c), query, radius, sqrRadius, resultIndices, distanceType);
         }
@@ -190,8 +186,8 @@ public class Octree {
         octant.setX(x);
         octant.setY(y);
         octant.setZ(z);
-
         octant.setExtent(extent);
+
         octant.setStart(startIdx);
         octant.setEnd(endIdx);
         octant.setSize(size);
@@ -354,7 +350,7 @@ public class Octree {
         return (distanceType.norm(x, y, z) < sqRadius);
     }
 
-    private static boolean contains(PointT query, double sqrRadius, Octant octant, DistanceType distanceType) {
+    private static boolean contains(PointT query, double sqRadius, Octant octant, DistanceType distanceType) {
         // we exploit the symmetry to reduce the test to test
         // whether the farthest corner is inside the search ball.
         double x = query.x() - octant.getX();
@@ -369,7 +365,7 @@ public class Octree {
         y += octant.getExtent();
         z += octant.getExtent();
 
-        return (distanceType.norm(x, y, z) < sqrRadius);
+        return (distanceType.norm(x, y, z) < sqRadius);
     }
 
     private static boolean inside(PointT query, double radius, Octant octant) {
