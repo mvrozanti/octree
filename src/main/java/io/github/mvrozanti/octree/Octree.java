@@ -11,7 +11,7 @@ public class Octree {
     private List<PointT> data;
     protected List<Integer> successors;
 
-    private void radiusNeighbors(Octant octant, PointT query, double radius, double sqrRadius, List<Integer> resultIndices, DistanceType distanceType) {
+    public void radiusNeighbors(Octant octant, PointT query, double radius, double sqrRadius, List<Integer> resultIndices, DistanceType distanceType) {
         List<PointT> points = data;
 
         // if search ball S(q,r) contains octant, simply add point indexes.
@@ -45,6 +45,61 @@ public class Octree {
         }
     }
 
+    public void radiusNeighbors(Octant octant, PointT query, double radius, double sqrRadius, List<Integer> resultIndices, List<Double> distances, DistanceType distanceType) {
+        List<PointT> points = data;
+
+        // if search ball S(q,r) contains octant, simply add point indexes.
+        if (contains(query, sqrRadius, octant, distanceType)) {
+            int idx = octant.getStart();
+            for (int i = 0; i < octant.getSize(); ++i) {
+                resultIndices.add(idx);
+                distances.add(distanceType.compute(query, points.get(idx)));
+                idx = successors.get(idx);
+            }
+
+            return;  // early pruning.
+        }
+
+        if (octant.isLeaf()) {
+            int idx = octant.getStart();
+            for (int i = 0; i < octant.getSize(); ++i) {
+                PointT p = points.get(idx);
+                double dist = distanceType.compute(query, p);
+                if (dist < sqrRadius) {
+                    resultIndices.add(idx);
+                    distances.add(dist);
+                }
+                idx = successors.get(idx);
+            }
+
+            return;
+        }
+
+        // check whether child nodes are in range.
+        for (int c = 0; c < 8; ++c) {
+            if (octant.getChild(c) == null) continue;
+            if (!overlaps(query, radius, sqrRadius, octant.getChild(c), distanceType)) continue;
+            radiusNeighbors(octant.getChild(c), query, radius, sqrRadius, resultIndices, distances, distanceType);
+        }
+    }
+
+    public void radiusNeighbors(PointT query, double radius, List<Integer> resultIndices, DistanceType distanceType) {
+        resultIndices.clear();
+        if (root == null)
+            return;
+        double sqrRadius = distanceType.sqr(radius);
+        radiusNeighbors(root, query, radius, sqrRadius, resultIndices, distanceType);
+    }
+
+    public void radiusNeighbors(PointT query, double radius, List<Integer> resultIndices, List<Double> distances, DistanceType distanceType) {
+        resultIndices.clear();
+        distances.clear();
+        if (root == null)
+            return;
+        double sqrRadius = distanceType.sqr(radius);
+        radiusNeighbors(root, query, radius, sqrRadius, resultIndices, distances, distanceType);
+    }
+
     public void initialize(List<PointT> points) {
         initialize(points, new OctreeParams());
     }
@@ -57,10 +112,10 @@ public class Octree {
         clear();
         params = octreeParams;
 
-        if (params.isCopyPoints())         /** is this an accurate translation for that condition? **/
-            data = new ArrayList<>(points); /*                                                      **/
-        else                                /*                                                      **/
-            data = points;                  /*                                                      **/
+        if (params.isCopyPoints())
+            data = new ArrayList<>(points);
+        else
+            data = points;
 
         final int N = points.size();
         successors = Arrays.asList(new Integer[N]);
@@ -113,10 +168,10 @@ public class Octree {
         clear();
         params = octreeParams;
 
-        if (params.isCopyPoints())         /** is this an accurate translation for that condition? **/
-            data = new ArrayList<>(points); /*                                                      **/
-        else                                /*                                                      **/
-            data = points;                  /*                                                      **/
+        if (params.isCopyPoints())
+            data = new ArrayList<>(points);
+        else
+            data = points;
 
         final int N = points.size();
         successors = new ArrayList<>(N);

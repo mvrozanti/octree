@@ -268,7 +268,7 @@ public class OctreeTest {
         octree.initialize(points);
 
         for (int i = 0; i < 10; i++) {
-            double normalized_double = abs(uniformDistribution.nextNormalizedDouble());
+            double normalized_double = abs(uniformDistribution.nextNormalizedDouble()) * N / 2;
             int index = (int) normalized_double;
             PointT query = points.get(index);
 
@@ -277,18 +277,47 @@ public class OctreeTest {
 
             int bfneighbor = bruteforce.findNeighbor(query, 0.3, DistanceType.EUCLIDEAN);
             int octneighbor = octree.findNeighbor(query, 0.3, DistanceType.EUCLIDEAN);
-            /***
-             * This part on the original implementation is weird.
-             * Both the variables defined above weren't used in the assertion below,
-             * but the same calls with 0.3f parameter instead of 0.0f were actually asserted.
-             */
+
             assertEquals(bfneighbor, octneighbor);
         }
     }
 
     @Test
-    private void testRadiusNeighbors() {
+    void testRadiusNeighbors() {
+        int N = 1000;
+        Random random = new Random(1234);
+        val uniformDistribution = new UniformRandomGenerator(RandomGeneratorFactory.createRandomGenerator(random));
 
+        List<PointT> points = new ArrayList<>();
+        randomPoints(points, N, 1234);
+
+        NaiveNeighborSearch bruteforce = new NaiveNeighborSearch();
+        bruteforce.initialize(points);
+        Octree octree = new Octree();
+        octree.initialize(points);
+
+        double[] radii = new double[]{0.5, 1.0, 2.0, 5.0};
+        for (int r = 0; r < 4; ++r) {
+            for (int i = 0; i < 10; ++i) {
+                List<Integer> neighborsBruteforce = new ArrayList<>();
+                List<Integer> neighborsOctree = new ArrayList<>();
+
+                int index = (int) abs(uniformDistribution.nextNormalizedDouble()) * N / 2;
+                PointT query = points.get(index);
+
+                bruteforce.radiusNeighbors(query, radii[r], neighborsBruteforce, DistanceType.EUCLIDEAN);
+                octree.radiusNeighbors(query, radii[r], neighborsOctree, DistanceType.EUCLIDEAN);
+                assertTrue(similarVectors(neighborsBruteforce, neighborsOctree));
+
+                bruteforce.radiusNeighbors(query, radii[r], neighborsBruteforce, DistanceType.MANHATTAN);
+                octree.radiusNeighbors(query, radii[r], neighborsOctree, DistanceType.MANHATTAN);
+                assertTrue(similarVectors(neighborsBruteforce, neighborsOctree));
+
+                bruteforce.radiusNeighbors(query, radii[r], neighborsBruteforce, DistanceType.MAXIMUM);
+                octree.radiusNeighbors(query, radii[r], neighborsOctree, DistanceType.MAXIMUM);
+                assertTrue(similarVectors(neighborsBruteforce, neighborsOctree));
+            }
+        }
     }
 
     private static void randomPoints(List<PointT> points, int N, int seed) {
