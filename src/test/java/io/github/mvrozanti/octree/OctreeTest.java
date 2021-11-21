@@ -3,7 +3,6 @@ package io.github.mvrozanti.octree;
 import io.github.mvrozanti.octree.distance.*;
 import java.util.*;
 import lombok.*;
-import org.apache.commons.math3.distribution.*;
 import org.apache.commons.math3.random.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.*;
@@ -272,18 +271,16 @@ public class OctreeTest {
             int index = (int) uniDist.nextNormalizedDouble();
             PointT query = points.get(index);
 
-            assertEquals(index, bruteforce.findNeighbor(query, Distance.EUCLIDEAN));
-            assertEquals(index, octree.findNeighbor(query, Distance.EUCLIDEAN));
+            assertEquals(index, bruteforce.findNeighbor(query, DistanceType.EUCLIDEAN));
+            assertEquals(index, octree.findNeighbor(query, DistanceType.EUCLIDEAN));
 
-
+            int bfneighbor = bruteforce.findNeighbor(query, 0.3, DistanceType.EUCLIDEAN);
+            int octneighbor = octree.findNeighbor(query, 0.3, DistanceType.EUCLIDEAN);
             /***
              * This part on the original implementation is weird.
              * Both the variables defined above weren't used in the assertion below,
              * but the same calls with 0.3f parameter instead of 0.0f were actually asserted.
              */
-            int bfneighbor = bruteforce.findNeighbor(query, 0, Distance.EUCLIDEAN);
-            int octneighbor = octree.findNeighbor(query, 0, Distance.EUCLIDEAN);
-
             assertEquals(bfneighbor, octneighbor);
         }
     }

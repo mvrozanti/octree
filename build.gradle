@@ -4,8 +4,8 @@ plugins {
     id 'signing'
 }
 
-group 'io.github.mvrozanti.octree'
-version '1.0-SNAPSHOT'
+group 'io.github.mvrozanti'
+version '1.0'
 
 repositories {
     mavenCentral()
@@ -30,28 +30,87 @@ test {
 
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
-    archiveClassifier = "sources"
+    archiveClassifier = "jar"
+}
+
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.withType(Sign) {
+    onlyIf { isReleaseVersion }
 }
 
 publishing {
     publications {
-        myPublication(MavenPublication) {
+        mavenJava(MavenPublication) {
             from components.java
             artifact sourceJar
             pom {
                 name = "octree"
                 description = "Octree implementation with radius search support"
                 url = "http://github.com/mvrozanti/octree"
+                licenses {
+                    license {
+                        name = 'The MIT License (MIT)'
+                        url = 'https://raw.githubusercontent.com/mvrozanti/octree/master/LICENSE'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'mvrozanti'
+                        name = 'Marcelo V. Rozanti'
+                        email = 'mvrozanti@hotmail.com'
+                    }
+                    developer {
+                        id = 'Pavou'
+                        name = 'Pantazis Vouzaxakis'
+                        email = 'panzos95@hotmail.com'
+                    }
+                    developer {
+                        id = 'jbehley'
+                        name = 'Jens Behley'
+                        url = 'https://jbehley.github.io/'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/mvrozanti/octree'
+                    developerConnection = 'scm:git:ssh://github.com/mvrozanti/octree.git'
+                    url = 'http://github.com/mvrozanti/octree'
+                }
             }
         }
     }
     repositories {
         maven {
-            url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+            def snapshotsRepoUrl = 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+            def releasesRepoUrl = 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+            url = isReleaseVersion ? releasesRepoUrl : snapshotsRepoUrl
             credentials {
-                username System.getenv("SONATYPE_USERNAME")
+                username System.getenv("SONATYPE_USER")
                 password System.getenv("SONATYPE_PASSWORD")
             }
         }
     }
+}
+
+tasks.withType(Jar) { task ->
+    task.doLast {
+        ant.checksum algorithm: 'md5', file: it.archivePath
+        ant.checksum algorithm: 'sha1', file: it.archivePath
+        ant.checksum algorithm: 'sha-256', file: it.archivePath, fileext: '.sha256'
+        ant.checksum algorithm: 'sha-512', file: it.archivePath, fileext: '.sha512'
+    }
+}
+
+jar {
+    from sourceSets.main.output
+    from sourceSets.main.allJava
+}
+
+signing {
+    sign publishing.publications.mavenJava
 }

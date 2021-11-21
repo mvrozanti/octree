@@ -2,6 +2,7 @@ package io.github.mvrozanti.octree;
 
 import io.github.mvrozanti.octree.distance.*;
 import java.util.*;
+import java.util.concurrent.atomic.*;
 
 public class Octree {
 
@@ -14,8 +15,38 @@ public class Octree {
     private List<PointT> data;
     protected List<Integer> successors;
 
-    public void radiusNeighbors(Octant octant, PointT query, double radius, double sqrRadius, List<Integer> resultIndices) {
+    private void radiusNeighbors(Octant octant, PointT query, double radius, double sqrRadius, List<Integer> resultIndices, DistanceType distanceType) {
+        List<PointT> points = data;
 
+        // if search ball S(q,r) contains octant, simply add point indexes.
+        if (contains(query, sqrRadius, octant, distanceType)) {
+            int idx = octant.getStart();
+            for (int i = 0; i < octant.getSize(); ++i) {
+                resultIndices.add(idx);
+                idx = successors.get(idx);
+            }
+
+            return;  // early pruning.
+        }
+
+        if (octant.isLeaf()) {
+            int idx = octant.getStart();
+            for (int i = 0; i < octant.getSize(); ++i) {
+                PointT p = points.get(idx);
+                double dist = distanceType.compute(query, p);
+                if (dist < sqrRadius) resultIndices.add(idx);
+                idx = successors.get(idx);
+            }
+
+            return;
+        }
+
+        // check whether child nodes are in range.
+        for (int c = 0; c < 8; ++c) {
+            if (octant.getChild(c).getSize() == 0) continue; // what means child == 0?
+            if (!overlaps(query, radius, sqrRadius, octant.getChild(c), distanceType)) continue;
+            radiusNeighbors(octant.getChild(c), query, radius, sqrRadius, resultIndices, distanceType);
+        }
     }
 
     public void initialize(List<PointT> points) {
@@ -231,31 +262,131 @@ public class Octree {
         return octant;
     }
 
-    public final int findNeighbor(Octant octant, PointT query, double minDistance, double maxDistance, int resultIndex, Distance distance) {
-        return 0;
-    }
-
-    public int findNeighbor(PointT query, Distance distance) {
-        return findNeighbor(query, -1, distance);
-    }
-
-    public int findNeighbor(PointT query, double minDistance, Distance distance) {
+    public int findNeighbor(PointT query, double minDistance, DistanceType distanceType) {
         double maxDistance = Double.POSITIVE_INFINITY;
-        int resultIndex = -1;
-        if(root == null)
-            return resultIndex;
-        return findNeighbor(root, query, minDistance, maxDistance, resultIndex, distance);
+        AtomicInteger resultIndex = new AtomicInteger(-1);
+        if (root == null)
+            return resultIndex.get();
+        findNeighbor(root, query, minDistance, maxDistance, resultIndex, distanceType);
+        return resultIndex.get();
     }
 
-    private static boolean overlaps(PointT query, double radius, double sqrRadius, Octant o) {
-        return false;
+    public boolean findNeighbor(Octant octant, PointT query, double minDistance, double maxDistance, AtomicInteger resultIndex, DistanceType distanceType) {
+        List<PointT> points = data;
+        // 1. first descend to leaf and check in leafs points.
+        if (octant.isLeaf()) {
+            int idx = octant.getStart();
+            double sqrMaxDistance = distanceType.sqr(maxDistance);
+            double sqrMinDistance = minDistance < 0 ? minDistance : distanceType.sqr(minDistance);
+
+            for (int i = 0; i < octant.getSize(); ++i) {
+                PointT p = points.get(idx);
+                double dist = distanceType.compute(query, p);
+                if (dist > sqrMinDistance && dist < sqrMaxDistance) {
+                    resultIndex.set(idx);
+                    sqrMaxDistance = dist;
+                }
+                idx = successors.get(idx);
+            }
+
+            maxDistance = distanceType.sqrt(sqrMaxDistance);
+            return inside(query, maxDistance, octant);
+        }
+
+        // determine Morton code for each point...
+        int mortonCode = 0;
+        if (query.x() > octant.getX()) mortonCode |= 1;
+        if (query.y() > octant.getY()) mortonCode |= 2;
+        if (query.z() > octant.getZ()) mortonCode |= 4;
+
+        if (octant.getChild(mortonCode) != null) {
+            if (findNeighbor(octant.getChild(mortonCode), query, minDistance, maxDistance, resultIndex, distanceType))
+                return true;
+        }
+
+        // 2. if current best point completely inside, just return.
+        double sqrMaxDistance = distanceType.sqr(maxDistance);
+
+        // 3. check adjacent octants for overlap and check these if necessary.
+        for (int c = 0; c < 8; ++c) {
+            if (c == mortonCode) continue;
+            if (octant.getChild(c) == null) continue;
+            if (!overlaps(query, maxDistance, sqrMaxDistance, octant.getChild(c), distanceType)) continue;
+            if (findNeighbor(octant.getChild(c), query, minDistance, maxDistance, resultIndex, distanceType))
+                return true;  // early pruning
+        }
+
+        // all children have been checked...check if point is inside the current octant...
+        return inside(query, maxDistance, octant);
     }
 
-    private static boolean contains(PointT query, double radius, double sqrRadius, Octant o) {
-        return false;
+    public int findNeighbor(PointT query, DistanceType distanceType) {
+        return findNeighbor(query, -1, distanceType);
     }
 
-    private static boolean inside(PointT query, double radius, double sqrRadius, Octant o) {
-        return false;
+    private static boolean overlaps(PointT query, double radius, double sqRadius, Octant octant, DistanceType distanceType) {
+        // we exploit the symmetry to reduce the test to testing if its inside the Minkowski sum around the positive quadrant.
+        double x = query.x() - octant.getX();
+        double y = query.y() - octant.getY();
+        double z = query.z() - octant.getZ();
+
+        x = Math.abs(x);
+        y = Math.abs(y);
+        z = Math.abs(z);
+
+        double maxdist = radius + octant.getExtent();
+
+        // Completely outside, since q' is outside the relevant area.
+        if (x > maxdist || y > maxdist || z > maxdist) return false;
+
+        int num_less_extent = (x < octant.getExtent() ? 1 : 0) + (y < octant.getExtent() ? 1 : 0) + ((z < octant.getExtent()) ? 1 : 0);
+
+        // Checking different cases:
+
+        // a. inside the surface region of the octant.
+        if (num_less_extent > 1) return true;
+
+        // b. checking the corner region && edge region.
+        x = Math.max(x - octant.getExtent(), 0.0f);
+        y = Math.max(y - octant.getExtent(), 0.0f);
+        z = Math.max(z - octant.getExtent(), 0.0f);
+
+        return (distanceType.norm(x, y, z) < sqRadius);
+    }
+
+    private static boolean contains(PointT query, double sqrRadius, Octant octant, DistanceType distanceType) {
+        // we exploit the symmetry to reduce the test to test
+        // whether the farthest corner is inside the search ball.
+        double x = query.x() - octant.getX();
+        double y = query.y() - octant.getY();
+        double z = query.z() - octant.getZ();
+
+        x = Math.abs(x);
+        y = Math.abs(y);
+        z = Math.abs(z);
+        // reminder: (x, y, z) - (-e, -e, -e) = (x, y, z) + (e, e, e)
+        x += octant.getExtent();
+        y += octant.getExtent();
+        z += octant.getExtent();
+
+        return (distanceType.norm(x, y, z) < sqrRadius);
+    }
+
+    private static boolean inside(PointT query, double radius, Octant octant) {
+        // we exploit the symmetry to reduce the test to test
+        // whether the farthest corner is inside the search ball.
+        double x = query.x() - octant.getX();
+        double y = query.y() - octant.getY();
+        double z = query.z() - octant.getZ();
+
+        x = Math.abs(x) + radius;
+        y = Math.abs(y) + radius;
+        z = Math.abs(z) + radius;
+
+        if (x > octant.getExtent()) return false;
+        if (y > octant.getExtent()) return false;
+        if (z > octant.getExtent()) return false;
+
+        return true;
     }
 }

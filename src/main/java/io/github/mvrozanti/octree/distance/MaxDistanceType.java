@@ -3,11 +3,11 @@ package io.github.mvrozanti.octree.distance;
 import io.github.mvrozanti.octree.*;
 import static java.lang.Math.*;
 
-public class MaxDistance extends Distance {
+public class MaxDistanceType extends DistanceType {
 
-    private static MaxDistance INSTANCE;
+    private static MaxDistanceType INSTANCE;
 
-    private MaxDistance() {
+    private MaxDistanceType() {
     }
 
     @Override
@@ -41,9 +41,9 @@ public class MaxDistance extends Distance {
         return r;
     }
 
-    protected static MaxDistance getInstance() {
+    protected static MaxDistanceType getInstance() {
         if (INSTANCE == null)
-            INSTANCE = new MaxDistance();
+            INSTANCE = new MaxDistanceType();
         return INSTANCE;
     }
 }

@@ -3,40 +3,39 @@ package io.github.mvrozanti.octree.distance;
 import io.github.mvrozanti.octree.*;
 import static java.lang.Math.*;
 
-public class EuclideanDistance extends Distance {
+public class ManhattanDistanceType extends DistanceType {
 
-    private static EuclideanDistance INSTANCE;
+    private static ManhattanDistanceType INSTANCE;
 
-    private EuclideanDistance() {
+    private ManhattanDistanceType() {
     }
 
     @Override
     public Double compute(PointT p, PointT q) {
         double diff1 = p.x() - q.x();
-        double diff2 = p.y() - p.y();
-        double diff3 = p.z() - p.z();
-
-        return pow(diff1, 2) + pow(diff2, 2) + pow(diff3, 2);
+        double diff2 = p.y() - q.y();
+        double diff3 = p.z() - q.z();
+        return abs(diff1) + abs(diff2) + abs(diff3);
     }
 
     @Override
     public Double norm(double x, double y, double z) {
-        return pow(x, 2) + pow(y, 2) + pow(z, 2);
+        return abs(x) + abs(y) + abs(z);
     }
 
     @Override
     public Double sqr(double r) {
-        return r * r;
+        return r;
     }
 
     @Override
     public Double sqrt(double r) {
-        return Math.sqrt(r);
+        return r;
     }
 
-    protected static EuclideanDistance getInstance() {
+    protected static ManhattanDistanceType getInstance() {
         if (INSTANCE == null)
-            INSTANCE = new EuclideanDistance();
+            INSTANCE = new ManhattanDistanceType();
         return INSTANCE;
     }
 }
