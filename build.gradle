@@ -1,11 +1,12 @@
 plugins {
+    id 'java-library'
     id 'java'
     id 'maven-publish'
     id 'signing'
 }
 
 group 'io.github.mvrozanti'
-version '1.0'
+version '0.1'
 
 repositories {
     mavenCentral()
@@ -89,6 +90,10 @@ publishing {
                 password System.getenv("SONATYPE_PASSWORD")
             }
         }
+    }
+    java {
+        withJavadocJar()
+        withSourcesJar()
     }
 }
 
