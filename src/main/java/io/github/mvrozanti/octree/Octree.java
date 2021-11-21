@@ -375,7 +375,7 @@ public class Octree {
         return findNeighbor(query, -1, distanceType);
     }
 
-    private static boolean overlaps(PointT query, double radius, double sqRadius, Octant octant, DistanceType distanceType) {
+    protected static boolean overlaps(PointT query, double radius, double sqRadius, Octant octant, DistanceType distanceType) {
         // we exploit the symmetry to reduce the test to testing if its inside the Minkowski sum around the positive quadrant.
         double x = query.x() - octant.getX();
         double y = query.y() - octant.getY();

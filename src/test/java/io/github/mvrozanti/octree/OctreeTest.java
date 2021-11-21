@@ -6,6 +6,7 @@ import lombok.*;
 import org.apache.commons.math3.random.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.function.*;
+import static io.github.mvrozanti.octree.Octree.*;
 import static java.lang.Math.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -318,6 +319,68 @@ public class OctreeTest {
                 assertTrue(similarVectors(neighborsBruteforce, neighborsOctree));
             }
         }
+    }
+
+    @Test
+    void testOverlap() {
+        Octant octant = new Octant();
+        octant.setX(1.);
+        octant.setY(1.);
+        octant.setZ(1.);
+        octant.setExtent(.5);
+
+        PointT query = new Point(1.25, 1.25, 0.5);
+        double radius = 1;
+        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        query = new Point(1.75, 1.0, 1.0);
+        radius = .5;
+
+        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        query = new Point(1.0, 1.75, 1.0);
+        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        query = new Point(1.0, 1.0, 1.75);
+        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        query = new Point(1.0, 1.0, 2.75);
+        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        // Edge cases:
+        query = new Point(1.65, 1.65, 1.25);
+        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        query = new Point(1.25, 1.65, 1.65);
+        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        query = new Point(1.65, 1.25, 1.75);
+        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        query = new Point(1.9, 1.25, 1.9);
+        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        query = new Point(1.25, 1.9, 1.9);
+        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        query = new Point(1.9, 1.9, 1.25);
+        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        query = new Point(1.65, 1.65, 1.65);
+        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        query = new Point(1.95, 1.95, 1.95);
+        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+
+        octant.setX(.025);
+        octant.setY(-.025);
+        octant.setZ(-.025);
+        octant.setExtent(.025);
+
+        query = new Point(.025, .025, .025);
+        radius = .025;
+
+        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
     }
 
     private static void randomPoints(List<PointT> points, int N, int seed) {
