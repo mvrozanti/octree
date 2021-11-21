@@ -29,6 +29,9 @@ test {
     useJUnitPlatform()
 }
 
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
     archiveClassifier = "jar"
@@ -91,10 +94,10 @@ publishing {
             }
         }
     }
-    java {
-        withJavadocJar()
-        withSourcesJar()
-    }
+//    java {
+//        withJavadocJar()
+//        withSourcesJar()
+//    }
 }
 
 tasks.withType(Jar) { task ->
