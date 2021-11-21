@@ -268,7 +268,8 @@ public class OctreeTest {
         octree.initialize(points);
 
         for (int i = 0; i < 10; i++) {
-            int index = (int) (uniformDistribution.nextNormalizedDouble()*1000);
+            double normalized_double = abs(uniformDistribution.nextNormalizedDouble());
+            int index = (int) normalized_double;
             PointT query = points.get(index);
 
             assertEquals(index, bruteforce.findNeighbor(query, DistanceType.EUCLIDEAN));

@@ -263,16 +263,16 @@ public class Octree {
         AtomicInteger resultIndex = new AtomicInteger(-1);
         if (root == null)
             return resultIndex.get();
-        findNeighbor(root, query, minDistance, maxDistance, resultIndex, distanceType);
+        findNeighbor(root, query, minDistance, new AtomicReference<>(maxDistance), resultIndex, distanceType);
         return resultIndex.get();
     }
 
-    public boolean findNeighbor(Octant octant, PointT query, double minDistance, double maxDistance, AtomicInteger resultIndex, DistanceType distanceType) {
+    public boolean findNeighbor(Octant octant, PointT query, double minDistance, AtomicReference<Double> maxDistance, AtomicInteger resultIndex, DistanceType distanceType) {
         List<PointT> points = data;
         // 1. first descend to leaf and check in leafs points.
         if (octant.isLeaf()) {
             int idx = octant.getStart();
-            double sqrMaxDistance = distanceType.sqr(maxDistance);
+            double sqrMaxDistance = distanceType.sqr(maxDistance.get());
             double sqrMinDistance = minDistance < 0 ? minDistance : distanceType.sqr(minDistance);
 
             for (int i = 0; i < octant.getSize(); ++i) {
@@ -285,7 +285,7 @@ public class Octree {
                 idx = successors.get(idx);
             }
 
-            maxDistance = distanceType.sqrt(sqrMaxDistance);
+            maxDistance.set(distanceType.sqrt(sqrMaxDistance));
             return inside(query, maxDistance, octant);
         }
 
@@ -301,13 +301,13 @@ public class Octree {
         }
 
         // 2. if current best point completely inside, just return.
-        double sqrMaxDistance = distanceType.sqr(maxDistance);
+        double sqrMaxDistance = distanceType.sqr(maxDistance.get());
 
         // 3. check adjacent octants for overlap and check these if necessary.
         for (int c = 0; c < 8; ++c) {
             if (c == mortonCode) continue;
             if (octant.getChild(c) == null) continue;
-            if (!overlaps(query, maxDistance, sqrMaxDistance, octant.getChild(c), distanceType)) continue;
+            if (!overlaps(query, maxDistance.get(), sqrMaxDistance, octant.getChild(c), distanceType)) continue;
             if (findNeighbor(octant.getChild(c), query, minDistance, maxDistance, resultIndex, distanceType))
                 return true;  // early pruning
         }
@@ -368,16 +368,16 @@ public class Octree {
         return (distanceType.norm(x, y, z) < sqRadius);
     }
 
-    private static boolean inside(PointT query, double radius, Octant octant) {
+    private static boolean inside(PointT query, AtomicReference<Double> radius, Octant octant) {
         // we exploit the symmetry to reduce the test to test
         // whether the farthest corner is inside the search ball.
         double x = query.x() - octant.getX();
         double y = query.y() - octant.getY();
         double z = query.z() - octant.getZ();
 
-        x = Math.abs(x) + radius;
-        y = Math.abs(y) + radius;
-        z = Math.abs(z) + radius;
+        x = Math.abs(x) + radius.get();
+        y = Math.abs(y) + radius.get();
+        z = Math.abs(z) + radius.get();
 
         if (x > octant.getExtent()) return false;
         if (y > octant.getExtent()) return false;

@@ -35,11 +35,6 @@ task sourceJar(type: Jar) {
 
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
-java {
-    withJavadocJar()
-    withSourcesJar()
-}
-
 tasks.withType(Sign) {
     onlyIf { isReleaseVersion }
 }
