@@ -109,6 +109,7 @@ tasks.withType(Jar) { task ->
 }
 
 jar {
+    enabled = true
     from sourceSets.main.output
     from sourceSets.main.allJava
 }
