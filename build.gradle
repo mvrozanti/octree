@@ -32,11 +32,6 @@ test {
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
-task sourceJar(type: Jar) {
-    from sourceSets.main.allJava
-    classifier "sources"
-}
-
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
 tasks.withType(Sign) {
@@ -44,6 +39,10 @@ tasks.withType(Sign) {
 }
 
 publishing {
+    task sourceJar(type: Jar) {
+        from sourceSets.main.allJava
+        classifier "sources"
+    }
     publications {
         mavenJava(MavenPublication) {
             from components.java
