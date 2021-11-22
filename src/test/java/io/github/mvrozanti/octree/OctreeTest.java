@@ -35,17 +35,12 @@ public class OctreeTest {
     }
 
     @Test
-    void testOctreeConstruction() {
-        Assertions.assertDoesNotThrow((Executable) Octree::new);
-    }
-
-    @Test
     void testInitializationWithMinExtent() {
         int N = 1000;
         OctreeParams params = new OctreeParams();
         params.setBucketSize(16);
 
-        Octree oct = new Octree();
+        Octree oct = new Octree(null);
 
         Octant root = oct.root;
 
@@ -147,13 +142,29 @@ public class OctreeTest {
     }
 
     @Test
+    void testInsertion() {
+        int N = 1000;
+        Octree octByInitialization = new Octree(DistanceType.EUCLIDEAN);
+        Octree octByInsertion = new Octree(DistanceType.EUCLIDEAN);
+
+        List<PointT> points = new ArrayList<>(N);
+        randomPoints(points, N, 2804);
+        octByInitialization.initialize(points);
+
+        List<PointT> points2 = new ArrayList<>(N);
+        randomPoints(points2, N, 2804);
+        for (PointT p : points2)
+            octByInsertion.insert(p);
+    }
+
+    @Test
     void testInitialization() {
         int N = 1000;
         OctreeParams params = new OctreeParams();
         params.setBucketSize(16);
         params.setMinExtent(1);
 
-        Octree oct = new Octree();
+        Octree oct = new Octree(null);
 
         Octant root = oct.root;
 
@@ -263,9 +274,9 @@ public class OctreeTest {
         List<PointT> points = new ArrayList<>();
         randomPoints(points, N, 1234);
 
-        NaiveNeighborSearch bruteforce = new NaiveNeighborSearch();
+        NaiveNeighborSearch bruteforce = new NaiveNeighborSearch(DistanceType.EUCLIDEAN);
         bruteforce.initialize(points);
-        Octree octree = new Octree();
+        Octree octree = new Octree(DistanceType.EUCLIDEAN);
         octree.initialize(points);
 
         for (int i = 0; i < 10; i++) {
@@ -273,11 +284,11 @@ public class OctreeTest {
             int index = (int) normalized_double;
             PointT query = points.get(index);
 
-            assertEquals(index, bruteforce.findNeighbor(query, DistanceType.EUCLIDEAN));
-            assertEquals(index, octree.findNeighbor(query, DistanceType.EUCLIDEAN));
+            assertEquals(index, bruteforce.findNeighbor(query));
+            assertEquals(index, octree.findNeighbor(query));
 
-            int bfneighbor = bruteforce.findNeighbor(query, 0.3, DistanceType.EUCLIDEAN);
-            int octneighbor = octree.findNeighbor(query, 0.3, DistanceType.EUCLIDEAN);
+            int bfneighbor = bruteforce.findNeighbor(query, 0.3);
+            int octneighbor = octree.findNeighbor(query, 0.3);
 
             assertEquals(bfneighbor, octneighbor);
         }
@@ -292,9 +303,9 @@ public class OctreeTest {
         List<PointT> points = new ArrayList<>();
         randomPoints(points, N, 1234);
 
-        NaiveNeighborSearch bruteforce = new NaiveNeighborSearch();
+        NaiveNeighborSearch bruteforce = new NaiveNeighborSearch(DistanceType.EUCLIDEAN);
         bruteforce.initialize(points);
-        Octree octree = new Octree();
+        Octree octree = new Octree(DistanceType.EUCLIDEAN);
         octree.initialize(points);
 
         double[] radii = new double[]{0.5, 1.0, 2.0, 5.0};
@@ -306,16 +317,20 @@ public class OctreeTest {
                 int index = (int) abs(uniformDistribution.nextNormalizedDouble()) * N / 2;
                 PointT query = points.get(index);
 
-                bruteforce.radiusNeighbors(query, radii[r], neighborsBruteforce, DistanceType.EUCLIDEAN);
-                octree.radiusNeighbors(query, radii[r], neighborsOctree, DistanceType.EUCLIDEAN);
+                bruteforce.radiusNeighbors(query, radii[r], neighborsBruteforce);
+                octree.radiusNeighbors(query, radii[r], neighborsOctree);
                 assertTrue(similarVectors(neighborsBruteforce, neighborsOctree));
 
-                bruteforce.radiusNeighbors(query, radii[r], neighborsBruteforce, DistanceType.MANHATTAN);
-                octree.radiusNeighbors(query, radii[r], neighborsOctree, DistanceType.MANHATTAN);
+                bruteforce.setDistanceType(DistanceType.MANHATTAN);
+                octree.setDistanceType(DistanceType.MANHATTAN);
+                bruteforce.radiusNeighbors(query, radii[r], neighborsBruteforce);
+                octree.radiusNeighbors(query, radii[r], neighborsOctree);
                 assertTrue(similarVectors(neighborsBruteforce, neighborsOctree));
 
-                bruteforce.radiusNeighbors(query, radii[r], neighborsBruteforce, DistanceType.MAXIMUM);
-                octree.radiusNeighbors(query, radii[r], neighborsOctree, DistanceType.MAXIMUM);
+                bruteforce.radiusNeighbors(query, radii[r], neighborsBruteforce);
+                octree.radiusNeighbors(query, radii[r], neighborsOctree);
+                bruteforce.setDistanceType(DistanceType.MAXIMUM);
+                octree.setDistanceType(DistanceType.MAXIMUM);
                 assertTrue(similarVectors(neighborsBruteforce, neighborsOctree));
             }
         }
@@ -323,6 +338,7 @@ public class OctreeTest {
 
     @Test
     void testOverlap() {
+        Octree dummy = new Octree(DistanceType.EUCLIDEAN);
         Octant octant = new Octant();
         octant.setX(1.);
         octant.setY(1.);
@@ -331,46 +347,46 @@ public class OctreeTest {
 
         PointT query = new Point(1.25, 1.25, 0.5);
         double radius = 1;
-        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertTrue(dummy.overlaps(query, radius, radius * radius, octant));
 
         query = new Point(1.75, 1.0, 1.0);
         radius = .5;
 
-        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertTrue(dummy.overlaps(query, radius, radius * radius, octant));
 
         query = new Point(1.0, 1.75, 1.0);
-        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertTrue(dummy.overlaps(query, radius, radius * radius, octant));
 
         query = new Point(1.0, 1.0, 1.75);
-        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertTrue(dummy.overlaps(query, radius, radius * radius, octant));
 
         query = new Point(1.0, 1.0, 2.75);
-        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertFalse(dummy.overlaps(query, radius, radius * radius, octant));
 
         // Edge cases:
         query = new Point(1.65, 1.65, 1.25);
-        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertTrue(dummy.overlaps(query, radius, radius * radius, octant));
 
         query = new Point(1.25, 1.65, 1.65);
-        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertTrue(dummy.overlaps(query, radius, radius * radius, octant));
 
         query = new Point(1.65, 1.25, 1.75);
-        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertTrue(dummy.overlaps(query, radius, radius * radius, octant));
 
         query = new Point(1.9, 1.25, 1.9);
-        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertFalse(dummy.overlaps(query, radius, radius * radius, octant));
 
         query = new Point(1.25, 1.9, 1.9);
-        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertFalse(dummy.overlaps(query, radius, radius * radius, octant));
 
         query = new Point(1.9, 1.9, 1.25);
-        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertFalse(dummy.overlaps(query, radius, radius * radius, octant));
 
         query = new Point(1.65, 1.65, 1.65);
-        assertTrue(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertTrue(dummy.overlaps(query, radius, radius * radius, octant));
 
         query = new Point(1.95, 1.95, 1.95);
-        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertFalse(dummy.overlaps(query, radius, radius * radius, octant));
 
         octant.setX(.025);
         octant.setY(-.025);
@@ -380,7 +396,7 @@ public class OctreeTest {
         query = new Point(.025, .025, .025);
         radius = .025;
 
-        assertFalse(overlaps(query, radius, radius * radius, octant, DistanceType.EUCLIDEAN));
+        assertFalse(dummy.overlaps(query, radius, radius * radius, octant));
     }
 
     private static void randomPoints(List<PointT> points, int N, int seed) {

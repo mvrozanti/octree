@@ -3,6 +3,7 @@ package io.github.mvrozanti.octree;
 import io.github.mvrozanti.octree.distance.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
+import lombok.*;
 
 public class Octree {
 
@@ -10,8 +11,19 @@ public class Octree {
     protected Octant root;
     private List<PointT> data;
     protected List<Integer> successors;
+    @Getter
+    @Setter
+    private DistanceType distanceType;
 
-    public void radiusNeighbors(Octant octant, PointT query, double radius, double sqrRadius, List<Integer> resultIndices, DistanceType distanceType) {
+    public Octree(DistanceType distanceType) {
+        this.distanceType = distanceType;
+    }
+
+    public void insert(PointT p) {
+
+    }
+
+    public void radiusNeighbors(Octant octant, PointT query, double radius, double sqrRadius, List<Integer> resultIndices) {
         List<PointT> points = data;
 
         // if search ball S(q,r) contains octant, simply add point indexes.
@@ -40,12 +52,12 @@ public class Octree {
         // check whether child nodes are in range.
         for (int c = 0; c < 8; ++c) {
             if (octant.getChild(c) == null) continue;
-            if (!overlaps(query, radius, sqrRadius, octant.getChild(c), distanceType)) continue;
-            radiusNeighbors(octant.getChild(c), query, radius, sqrRadius, resultIndices, distanceType);
+            if (!overlaps(query, radius, sqrRadius, octant.getChild(c))) continue;
+            radiusNeighbors(octant.getChild(c), query, radius, sqrRadius, resultIndices);
         }
     }
 
-    public void radiusNeighbors(Octant octant, PointT query, double radius, double sqrRadius, List<Integer> resultIndices, List<Double> distances, DistanceType distanceType) {
+    public void radiusNeighbors(Octant octant, PointT query, double radius, double sqrRadius, List<Integer> resultIndices, List<Double> distances) {
         List<PointT> points = data;
 
         // if search ball S(q,r) contains octant, simply add point indexes.
@@ -78,26 +90,26 @@ public class Octree {
         // check whether child nodes are in range.
         for (int c = 0; c < 8; ++c) {
             if (octant.getChild(c) == null) continue;
-            if (!overlaps(query, radius, sqrRadius, octant.getChild(c), distanceType)) continue;
-            radiusNeighbors(octant.getChild(c), query, radius, sqrRadius, resultIndices, distances, distanceType);
+            if (!overlaps(query, radius, sqrRadius, octant.getChild(c))) continue;
+            radiusNeighbors(octant.getChild(c), query, radius, sqrRadius, resultIndices, distances);
         }
     }
 
-    public void radiusNeighbors(PointT query, double radius, List<Integer> resultIndices, DistanceType distanceType) {
+    public void radiusNeighbors(PointT query, double radius, List<Integer> resultIndices) {
         resultIndices.clear();
         if (root == null)
             return;
         double sqrRadius = distanceType.sqr(radius);
-        radiusNeighbors(root, query, radius, sqrRadius, resultIndices, distanceType);
+        radiusNeighbors(root, query, radius, sqrRadius, resultIndices);
     }
 
-    public void radiusNeighbors(PointT query, double radius, List<Integer> resultIndices, List<Double> distances, DistanceType distanceType) {
+    public void radiusNeighbors(PointT query, double radius, List<Integer> resultIndices, List<Double> distances) {
         resultIndices.clear();
         distances.clear();
         if (root == null)
             return;
         double sqrRadius = distanceType.sqr(radius);
-        radiusNeighbors(root, query, radius, sqrRadius, resultIndices, distances, distanceType);
+        radiusNeighbors(root, query, radius, sqrRadius, resultIndices, distances);
     }
 
     public void initialize(List<PointT> points) {
@@ -312,16 +324,16 @@ public class Octree {
         return octant;
     }
 
-    public int findNeighbor(PointT query, double minDistance, DistanceType distanceType) {
+    public int findNeighbor(PointT query, double minDistance) {
         double maxDistance = Double.POSITIVE_INFINITY;
         AtomicInteger resultIndex = new AtomicInteger(-1);
         if (root == null)
             return resultIndex.get();
-        findNeighbor(root, query, minDistance, new AtomicReference<>(maxDistance), resultIndex, distanceType);
+        findNeighbor(root, query, minDistance, new AtomicReference<>(maxDistance), resultIndex);
         return resultIndex.get();
     }
 
-    public boolean findNeighbor(Octant octant, PointT query, double minDistance, AtomicReference<Double> maxDistance, AtomicInteger resultIndex, DistanceType distanceType) {
+    public boolean findNeighbor(Octant octant, PointT query, double minDistance, AtomicReference<Double> maxDistance, AtomicInteger resultIndex) {
         List<PointT> points = data;
         // 1. first descend to leaf and check in leafs points.
         if (octant.isLeaf()) {
@@ -350,7 +362,7 @@ public class Octree {
         if (query.z() > octant.getZ()) mortonCode |= 4;
 
         if (octant.getChild(mortonCode) != null) {
-            if (findNeighbor(octant.getChild(mortonCode), query, minDistance, maxDistance, resultIndex, distanceType))
+            if (findNeighbor(octant.getChild(mortonCode), query, minDistance, maxDistance, resultIndex))
                 return true;
         }
 
@@ -361,8 +373,8 @@ public class Octree {
         for (int c = 0; c < 8; ++c) {
             if (c == mortonCode) continue;
             if (octant.getChild(c) == null) continue;
-            if (!overlaps(query, maxDistance.get(), sqrMaxDistance, octant.getChild(c), distanceType)) continue;
-            if (findNeighbor(octant.getChild(c), query, minDistance, maxDistance, resultIndex, distanceType))
+            if (!overlaps(query, maxDistance.get(), sqrMaxDistance, octant.getChild(c))) continue;
+            if (findNeighbor(octant.getChild(c), query, minDistance, maxDistance, resultIndex))
                 return true;  // early pruning
         }
 
@@ -370,11 +382,11 @@ public class Octree {
         return inside(query, maxDistance, octant);
     }
 
-    public int findNeighbor(PointT query, DistanceType distanceType) {
-        return findNeighbor(query, -1, distanceType);
+    public int findNeighbor(PointT query) {
+        return findNeighbor(query, -1);
     }
 
-    protected static boolean overlaps(PointT query, double radius, double sqRadius, Octant octant, DistanceType distanceType) {
+    protected boolean overlaps(PointT query, double radius, double sqRadius, Octant octant) {
         // we exploit the symmetry to reduce the test to testing if its inside the Minkowski sum around the positive quadrant.
         double x = query.x() - octant.getX();
         double y = query.y() - octant.getY();
@@ -404,7 +416,7 @@ public class Octree {
         return (distanceType.norm(x, y, z) < sqRadius);
     }
 
-    private static boolean contains(PointT query, double sqRadius, Octant octant, DistanceType distanceType) {
+    private boolean contains(PointT query, double sqRadius, Octant octant, DistanceType distanceType) {
         // we exploit the symmetry to reduce the test to test
         // whether the farthest corner is inside the search ball.
         double x = query.x() - octant.getX();

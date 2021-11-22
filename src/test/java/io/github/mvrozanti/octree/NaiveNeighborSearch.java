@@ -2,20 +2,28 @@ package io.github.mvrozanti.octree;
 
 import io.github.mvrozanti.octree.distance.*;
 import java.util.*;
+import lombok.*;
 
 public class NaiveNeighborSearch {
 
     private List<PointT> data;
+    @Getter
+    @Setter
+    private DistanceType distanceType;
+
+    public NaiveNeighborSearch(DistanceType distanceType) {
+        this.distanceType = distanceType;
+    }
 
     public void initialize(List<PointT> points) {
         data = points;
     }
 
-    public int findNeighbor(PointT query, DistanceType distanceType) {
-        return findNeighbor(query, -1, distanceType);
+    public int findNeighbor(PointT query) {
+        return findNeighbor(query, -1);
     }
 
-    public int findNeighbor(PointT query, double minDistance, DistanceType distanceType) {
+    public int findNeighbor(PointT query, double minDistance) {
         List<PointT> pts = data;
         if (pts.size() == 0) return -1;
 
@@ -33,7 +41,7 @@ public class NaiveNeighborSearch {
         return resultIndex;
     }
 
-    public void radiusNeighbors(PointT query, double radius, List<Integer> resultIndices, DistanceType distanceType) {
+    public void radiusNeighbors(PointT query, double radius, List<Integer> resultIndices) {
         List<PointT> pts = data;
         resultIndices.clear();
         double sqrRadius = distanceType.sqr(radius);
