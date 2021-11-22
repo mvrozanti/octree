@@ -1,7 +1,6 @@
 *.DS_Store
 .gradle
 gradle
-gradlew
 .settings
 .project
 .classpath
