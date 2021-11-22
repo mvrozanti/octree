@@ -47,6 +47,9 @@ publishing {
         mavenJava(MavenPublication) {
             from components.java
             artifact sourceJar
+            signing {
+                sign publishing.publications.mavenJava
+            }
             pom {
                 name = "octree"
                 description = "Octree implementation with radius search support"
@@ -112,8 +115,4 @@ jar {
     enabled = true
     from sourceSets.main.output
     from sourceSets.main.allJava
-}
-
-signing {
-    sign publishing.publications.mavenJava
 }
