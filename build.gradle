@@ -1,13 +1,13 @@
-wrapper {
-    gradleVersion = '5.2'
-    distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
-}
-
 plugins {
     id 'java-library'
     id 'java'
     id 'maven-publish'
     id 'signing'
+}
+
+wrapper {
+    gradleVersion = '5.2'
+    distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
 }
 
 group 'io.github.mvrozanti'
